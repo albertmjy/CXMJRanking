@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Analysis</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous" />
+
+    <style>
+        h5{
+            background: #dcf1f5;
+            box-shadow: 1px 1px 3px #5ba0e5;
+        }
+        h6{
+            background: #f7f7f7;
+            text-align: center;
+        }
+    </style>
+
+</head>
+<body ng-app="myApp" ng-controller="bodyController">
+
+<nav class="navbar fixed-top navbar-light bg-light ">
+    <input type="search" class="form-control form-control-sm col-9" value="" />
+
+    <button class="btn btn-sm btn-outline-secondary col-2">-></button>
+
+</nav>
+<br />
+<br />
+<input type="hidden" id="date" value="{{ date }}">
+
+<div>analysis</div>
+
+<div ng-repeat="tea in contentList">
+    <h4>Form [[ $index + 1 ]]</h4>
+    <div ng-repeat=" (cat, v) in tea">
+        <h5> [[ cat ]]</h5>
+        <div ng-if='v.length'>
+            <div ng-repeat="p in v">[[ p ]]</div>
+        </div>
+        <div ng-if='!v.length'>
+            <div ng-repeat="(sub, obj) in v">
+                <h6>[[ sub ]]</h6>
+                <div ng-repeat="p in obj">[[ p ]]</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+
+<script src="https://cdn.staticfile.org/angular.js/1.6.3/angular.min.js"></script>
+
+<script>
+    var app = angular.module('myApp', []);
+
+    app.config(function($interpolateProvider){
+        $interpolateProvider.startSymbol('[[').endSymbol(']]');
+    });
+
+    app.controller('bodyController', function($scope, $http) {
+        console.log(location.href)
+        var date = document.getElementById('date').value
+        var url = location.href.split('?')[0] + "/../../service/survey/analysis?date=" + date
+
+        $http({
+            method: 'GET',
+            url: url
+
+        }).then(function successCallback(response) {
+                $scope.contentList = response.data;
+                $scope.contentListLength = $scope.contentList.length;
+                console.log($scope.contentList)
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+        });
+    })
+</script>
+
+</body>
+</html>

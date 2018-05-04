@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit User Form</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Life is not esay</title>
+     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous" />
+
+    <link rel="stylesheet" href="{{ url }}/../../static/custom/css/survey.edit.css" />
+<!--    <link rel="stylesheet" href="{{ url_for('static', filename='custom/css/survey.edit.css') }}" /> -->
+
+
+</head>
+<body ng-app="myApp" ng-controller="bodyController">
+{#<nav class="navbar fixed-top navbar-light bg-light nav nav-masthead justify-content-center " style="overflow: hidden; white-space: nowrap; flex-wrap: nowrap">#}
+{#    {% for it in keys %}#}
+{#        <a class="nav-item nav-link" href="#">{{ it }}</a>#}
+{#    {% endfor %}#}
+{#</nav>#}
+<nav class="navbar fixed-top navbar-light bg-light ">
+    <input type="search" class="form-control form-control-sm col-9" value="" />
+
+    <button class="btn btn-sm btn-outline-secondary col-2">-></button>
+
+</nav>
+<br />
+<br />
+
+<div class="tab-content" id="pills-tabContent">
+    <div class="tab-pane fade" id="v-face" role="tabpanel" >
+        <h3>Welcome</h3>
+        <input name="date" class="form-control" ng-model="TODAY"  disabled />
+        <br />
+        <input name="user" class="form-control" ng-model="user" placeholder="姓名" />
+        <input name="teaage" type="number" class="form-control" ng-model="teaage" placeholder="茶龄" />
+    </div>
+
+    <div class="tab-pane fade show active" id="v-form1" role="tabpanel" >
+        <form name="" class="form">
+            {% include 'survey/survey_form.html' %}
+        </form>
+    </div>
+    <div class="tab-pane fade" id="v-form2" role="tabpanel" >
+        <form name="" class="form">
+            {% include 'survey/survey_form.html' %}
+        </form>
+    </div>
+    <div class="tab-pane fade" id="v-form3" role="tabpanel" >
+        <form name="" class="form">
+            {% include 'survey/survey_form.html' %}
+        </form>
+    </div>
+    <div class="tab-pane fade" id="v-form4" role="tabpanel" >
+        <form name="" class="form">
+            {% include 'survey/survey_form.html' %}
+        </form>
+    </div>
+</div>
+
+<footer class="footer fixed-bottom">
+  <nav class="navbar navbar-light bg-light    nav nav-pills nav-fill" id="pills-tab" role="tablist">
+{#  <a class="navbar-brand" href="#">Fixed bottom</a>#}
+
+{#      <a id="face" data-toggle="pill" class="nav-link " href="#v-face" role="tab" >&#9776;</a>#}
+      <a id="face" data-toggle="pill" class="nav-link " href="#v-face" role="tab" >&#9786;</a>
+      <a id="form1" data-toggle="pill" class="nav-link active" href="#v-form1" role="tab" >1</a>
+      <a id="form2" data-toggle="pill" class="nav-link" href="#v-form2" role="tab" >2</a>
+      <a id="form3" data-toggle="pill" class="nav-link" href="#v-form3" role="tab" >3</a>
+      <a id="form4" data-toggle="pill" class="nav-link" href="#v-form4" role="tab" >4</a>
+      <button ng-click="submit()" class="btn btn-success">Save</button>
+
+  </nav>
+</footer>
+
+<div id="saveModal" class="modal fade " tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+
+      <div class="modal-body" style="text-align: center">
+        Saved Successfully!
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+
+<script src="https://cdn.staticfile.org/angular.js/1.6.3/angular.min.js"></script>
+
+
+<script>
+
+    var app = angular.module('myApp', []);
+
+    app.config(function($interpolateProvider){
+        $interpolateProvider.startSymbol('[[').endSymbol(']]');
+    });
+
+    console.log(location.href)
+    app.controller('bodyController', function($scope, $http) {
+        $http({
+            method: 'GET',
+            url: location.href + "/../../static/resources/source2.json"
+            //url: 'http://localhost:5000/static/resources/source2.json'
+        }).then(function successCallback(response) {
+                $scope.word_data = response.data;
+                console.log($scope.word_data)
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+        });
+
+
+        $scope.TODAY = (new Date()).toJSON().substr(0,10)
+        $scope.keys = ["干茶香", "茶汤下咽后的感觉", "茶汤入口", "茶汤的整体滋味变化", "身体对茶的反应"]
+        $scope.subkeys = [[], ["停口留香", "喉部", "回甘", "生津"], ["口感","杯底香","滋味","涩","苦","香"], [], []]
+        $scope.comments = [[], [], [], [], []]
+        $scope.full_data = [{"values":[], "comments": []},
+                            [{},{},{},{}], [{},{},{},{},{},{}], [], []]
+
+
+        $scope.survey_data = [
+            {"key":"干茶香",
+            "values":[
+
+            ]},
+            {"key":"茶汤下咽后的感觉",
+            "subkeys":[
+                {"key": "停口留香", "values": { }},
+                {"key": "喉部", "values": { }},
+                {"key": "回甘", "values": { }},
+                {"key": "生津", "values": { }}
+            ]
+            },
+            {"key":"茶汤入口",
+            "subkeys":[
+                {"key": "口感", "values": { }},
+                {"key": "杯底香", "values": { }},
+                {"key": "涩化", "values": { }},
+                {"key": "苦化", "values": { }},
+                {"key": "香", "values": { }}
+            ]
+            },
+            {"key":"茶汤的整体滋味变化",
+            "values":[
+
+            ]},
+            {"key":"身体对茶的反应",
+            "values":[
+
+            ]},
+        ]
+
+        $scope.submit = function () {
+            var surveyData = _buildFormData()
+
+            var returnData = {"keys":$scope.keys, "subs":$scope.subkeys, "user":$scope.user, "teaAge":$scope.teaage, "date":$scope.TODAY, "surveyData": surveyData}
+
+            $http({
+                method: 'POST',
+                url: location.href + "/../../survey/save", //url: '/survey/save',
+                data: returnData
+            }).then(function successCallback(response) {
+                $('#saveModal').modal('show')
+                console.log(response.data)
+                }, function errorCallback(response) {
+            });
+        }
+        $scope.itemToggle = function (e) {
+            var currEl = e.currentTarget
+
+            var clsName = currEl.className
+            if (currEl.className.includes('btn-outline-primary')){
+                currEl.className = clsName.replace('btn-outline-primary', 'btn-primary')
+                _toggleSelData(currEl, true)
+            } else {
+                currEl.className = clsName.replace('btn-primary', 'btn-outline-primary')
+                _toggleSelData(currEl, false)
+
+            }
+
+        }
+
+        function _toggleSelData(el, bool) {
+            el.setAttribute('data-selected', bool)
+        }
+
+        function _buildFormData() {
+            var surveyDataSet = []
+
+            for(var i=0; i<4; i++){
+                var surveyData = {
+                "干茶香": {
+                    "values": [],
+                    "comments": ""
+                },
+                "茶汤下咽后的感觉": {
+                    "停口留香": {"values": [],"comments": ""},
+                    "喉部": {"values": [], "comments": ""},
+                    "回甘": {"values": [], "comments": ""},
+                    "生津": {"values": [], "comments": ""}
+                },
+                "茶汤入口": {
+                    "口感": {"values": [], "comments": ""},
+                    "杯底香": {"values": [], "comments": ""},
+                    "滋味": {"values": [], "comments": ""},
+                    /*"涩化": {"values": [], "comments": ""},
+                    "苦化": {"values": [], "comments": ""},*/
+                    "涩": {"values": [], "comments": ""},
+                    "苦": {"values": [], "comments": ""},
+                    "香": {"values": [], "comments": ""}
+                },
+                "茶汤的整体滋味变化": {
+                    "values": [],
+                    "comments": ""
+                },
+                "身体对茶的反应": {
+                    "values": [],
+                    "comments": ""
+                }
+            }
+
+
+                // pack up the item
+                var nodeList = document.forms[i].querySelectorAll('button[data-selected="true"]')
+                nodeList.forEach(function (obj, i) {
+                    console.log(obj)
+                    var cat = obj.name
+                    var sub = obj.getAttribute('data-sub')
+                    var prop = obj.value
+                    var key = obj.getAttribute('data-key')
+                    var value = obj.getAttribute('data-value')
+
+                    console.log(cat, sub, prop, key, value)
+
+                    if (sub){
+                        // surveyData[cat][sub].values.push(prop)
+                        console.log(cat, sub )
+                        console.log(surveyData[cat])
+                        console.log(surveyData[cat][sub])
+
+                        surveyData[cat][sub].values.push({'key':key, "prop":prop, "value":value})
+                    } else{
+                        // surveyData[cat].values.push(prop)
+                        surveyData[cat].values.push({'key':key, "prop":prop, "value":value})
+                    }
+                })
+
+                // pack up the comments
+                var commentsNode = document.forms[i].querySelectorAll('input[data-cat]')
+                commentsNode.forEach(function (input, i) {
+                    var cat = input.getAttribute('data-cat')
+                    var sub = input.getAttribute('data-sub')
+                    var value = input.value
+
+                    {#var catKey = $scope.keys[cat]#}
+                    {#var subKey = $scope.subkeys[cat][sub]#}
+                    var catKey = input.getAttribute('data-cat')
+                    var subKey = input.getAttribute('data-sub')
+
+                    console.log(">>>>>>>>>>", catKey, subKey)
+                    if(sub){
+                        surveyData[catKey][subKey].comments = value
+                    } else{
+                        surveyData[catKey].comments = value
+                    }
+                })
+
+                surveyDataSet.push(surveyData)
+            }
+
+            return surveyDataSet
+        }
+
+    });
+
+
+</script>
+</body>
+</html>

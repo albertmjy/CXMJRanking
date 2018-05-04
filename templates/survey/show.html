@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit User Form</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Life is not esay</title>
+     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous" />
+
+    <style>
+        h5{
+            background: #dcf1f5;
+            box-shadow: 1px 1px 3px #5ba0e5;
+        }
+        h6{
+            background: #f7f7f7;
+            text-align: center;
+        }
+    </style>
+</head>
+<body ng-app="myApp" ng-controller="bodyController">
+
+<nav class="navbar fixed-top navbar-light bg-light ">
+    <input type="search" class="form-control form-control-sm col-9" value="" />
+
+    <button class="btn btn-sm btn-outline-secondary col-2">-></button>
+
+</nav>
+<input type="hidden" id="user" value="{{ user }}">
+<input type="hidden" id="date" value="{{ date }}">
+<br />
+<br />
+
+<div>[[ details.user ]]</div>
+<div>[[ details.date ]]</div>
+<div>[[ details.teaAge ]]</div>
+<div>[[ details.score_list ]]</div>
+{#<div>[[ details.score_list_decimal | number]]</div>#}
+<label ng-repeat="n in details.score_list_decimal">[[n | number:4]] , </label>
+
+<div ng-repeat="(i, obj) in details.surveyData">
+    <h4>Form [[ i +1]]</h4>
+
+    <div ng-repeat="(k, v) in obj" class="card card-body bg-white">
+        <h5>[[ k ]]</h5>
+        <div ng-if="v.values">
+            <label ng-repeat="s in v.values">[[s.value]]， </label>
+            <div>[[ v.comments ]]</div>
+        </div>
+        <div ng-if="!v.values">
+            <div ng-repeat="(sub, it) in v">
+                <h6> - [[ sub ]] - </h6>
+                <label ng-repeat="s in it.values">[[s.value]]， </label>
+{#                <div>[[ it.values ]]</div>#}
+                <div>[[ it.comments ]]</div>
+            </div>
+
+        </div>
+
+
+    </div>
+</div>
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+
+<script src="https://cdn.staticfile.org/angular.js/1.6.3/angular.min.js"></script>
+
+<script>
+    var app = angular.module('myApp', []);
+
+    app.config(function($interpolateProvider){
+        $interpolateProvider.startSymbol('[[').endSymbol(']]');
+    });
+
+    app.controller('bodyController', function($scope, $http) {
+        var user = document.getElementById('user').value
+        var date = document.getElementById('date').value
+
+        console.log(user, date)
+
+        {#var url = "http://localhost:5000/service/survey/show?user="+ user + "&date=" + date#}
+        var url = location.href.split('?')[0] + "/../../service/survey/show?user="+ user + "&date=" + date
+        $http({
+            method: 'GET',
+            url: url
+        }).then(function successCallback(response) {
+                $scope.details = response.data;
+                console.log($scope.details)
+            }, function errorCallback(response) {
+                // 请求失败执行代码
+        });
+
+
+    })
+</script>
+
+</body>
+</html>
