@@ -15,7 +15,7 @@ def save(req_data):
     if not os.path.exists(path_of_day):
         os.mkdir(path_of_day)
 
-    obj = json.loads(req_data)
+    obj = json.loads(req_data)  # obj = json.loads(req_data.decode('utf8'))
     score_list = calc_score(obj)
     obj['score_list'] = score_list
     obj['score_list_decimal'] = to_decimal(score_list, word.read_data())
@@ -71,8 +71,11 @@ def merge_word(list_content):
     # ls = dict()
     for i in range(4):
         ls = dict()
+        print("\n")
         for obj in list_content:
+            print(i, "merge word:", obj)
             current_survey_data = obj['surveyData'][i]
+            # print("\t", current_survey_data)
 
             for cat in current_survey_data:
                 if 'values' in current_survey_data[cat]:
@@ -88,14 +91,17 @@ def merge_word(list_content):
                 else:
                     if cat not in ls:
                         ls[cat] = dict()
-
+                    # print("\t\t", cat)
                     for sub in current_survey_data[cat]:
+                        # print("\t"*3, sub, ls[cat])
                         if sub not in ls[cat]:
                             ls[cat][sub] = []
                         current_sub = current_survey_data[cat][sub]
+                        # print("\t" * 4, current_sub)
                         for v in current_sub['values']:
                             ls[cat][sub].append(v['value'])
-                        comm_list += re.findall(r'\w+', current_sub['comments'])
+                        # comm_list += re.findall(r'\w+', current_sub['comments'])
+                        comm_list = re.findall(r'\w+', current_sub['comments'])
                         ls[cat][sub] += comm_list
                         # comm_list = current_sub['comments'].split(' ')
                         # ls[cat][sub] += [el for el in comm_list if len(el)>0]
