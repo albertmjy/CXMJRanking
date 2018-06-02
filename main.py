@@ -53,6 +53,11 @@ def survey_service():
 def survey_service_show():
     return survey_serv.show(request.args['date'], request.args['user'])
 
+@app.route('/#/data/word', methods=['GET', 'POST'])
+def data_service():
+    # return data_service.word()
+    return word
+
 @app.route('/data/<name>')
 def data(name):
     # return url_for('static', filename='resources/source.json')
