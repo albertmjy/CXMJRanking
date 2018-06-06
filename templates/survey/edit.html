@@ -106,7 +106,8 @@
     app.controller('bodyController', function($scope, $http) {
         $http({
             method: 'GET',
-            url: location.href + "/../../static/resources/source2.json"
+            url: "/service/data/word/"
+            // url: location.href + "/../../static/resources/source2.json"
             //url: 'http://localhost:5000/static/resources/source2.json'
         }).then(function successCallback(response) {
                 $scope.word_data = response.data;

@@ -26,9 +26,9 @@ def _word(action):
 @app.route('/survey/<action>', methods=['GET', 'POST'])
 def survey(action):
     if action == 'edit':
-        data = word.read_data()
-        keys = list(data.keys())
-        return render_template('survey/edit.html', action=action, data=word.read_data(), keys=keys, url=request.url)
+        # data = word.read_data()
+        # keys = list(data.keys())
+        return render_template('survey/edit.html', action=action, data=data, url=request.url)
     if action == "save" and request.method == 'POST':
         req_data = request.data
         filename = survey_serv.save(req_data)
@@ -53,10 +53,10 @@ def survey_service():
 def survey_service_show():
     return survey_serv.show(request.args['date'], request.args['user'])
 
-@app.route('/#/data/word', methods=['GET', 'POST'])
+@app.route('/service/data/word/', methods=['GET', 'POST'])
 def data_service():
-    # return data_service.word()
-    return word
+    return word.read_data()
+    # return word
 
 @app.route('/data/<name>')
 def data(name):
