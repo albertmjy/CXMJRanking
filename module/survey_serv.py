@@ -5,6 +5,7 @@ import time, os
 from collections import Counter
 
 from module import word
+from module import db_actions
 
 def test():
     return "life isnot easy"
@@ -16,6 +17,9 @@ def save(req_data):
         os.mkdir(path_of_day)
 
     obj = json.loads(req_data)  # obj = json.loads(req_data.decode('utf8'))
+
+    db_actions.save_to_survey_table(obj)
+
     score_list = calc_score(obj)
     obj['score_list'] = score_list
     obj['score_list_decimal'] = to_decimal(score_list, word.read_data())

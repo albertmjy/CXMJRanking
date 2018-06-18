@@ -18,8 +18,9 @@ def read_data():
         # json_data = json.load(fp)
         # _conver_to_db(json_data)
 
-    db_actions.create_survey_tables()
-    json_data = json.dumps(db_actions.read_words())
+    # db_actions.create_survey_tables()
+    # json_data = json.dumps(db_actions.read_words())
+    json_data = db_actions.read_words()
     return json_data
 
 

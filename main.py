@@ -55,7 +55,7 @@ def survey_service_show():
 
 @app.route('/service/data/word/', methods=['GET', 'POST'])
 def data_service():
-    return word.read_data()
+    return json.dumps( word.read_data())
     # return word
 
 @app.route('/data/<name>')

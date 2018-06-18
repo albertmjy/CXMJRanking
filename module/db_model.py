@@ -33,6 +33,7 @@ class SurveyForm(Base):
     __tablename__ = "Survey_Form"
 
     FormId = Column(Integer, primary_key=True, autoincrement=True)
+    FormOrder = Column(Integer)
     TeaId = Column(Integer) # left in case
     TeaName = Column(String) # left in case
     Score = Column(Float)
@@ -40,6 +41,7 @@ class SurveyForm(Base):
     SurveyId = Column(Integer, ForeignKey("Survey_Data.SurveyId"))
 
     Prop = relationship("SurveyProp")
+    Comments = relationship("SurveyComments")
 
 class SurveyProp(Base):
     __tablename__ = "Survey_Prop"
@@ -50,12 +52,22 @@ class SurveyProp(Base):
 
     Word = relationship("Word")
 
+class SurveyComments(Base):
+    __tablename__ = "Survey_Comments"
+
+    CommentId = Column(Integer, primary_key=True, autoincrement=True)
+    FormId = Column(Integer, ForeignKey("Survey_Form.FormId"))
+    CategoryId = Column(Integer, ForeignKey("Categories.CategoryId"))
+    Content = Column(String, nullable=False)
+
 class Category(Base):
     __tablename__ = "Categories"
 
     CategoryId = Column(Integer, primary_key=True)
     RootCategory = Column(String)
     SubCategory = Column(String)
+
+    Words = relationship("Word")
 
 
 class Word(Base):
@@ -65,6 +77,8 @@ class Word(Base):
     Key = Column(String)
     Name = Column(String)
     Value = Column(Float)
+    Inclusion = Column(String)
+    Exclusion = Column(String)
     CategoryId = Column(Integer, ForeignKey("Categories.CategoryId"))
 
     Category = relationship("Category")
