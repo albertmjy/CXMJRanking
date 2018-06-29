@@ -2,12 +2,45 @@
 
 <div class="card card-body bg-white" style="margin-bottom: 3em">
 
+    <section class="category" ng-repeat="catObj in newData.struct" >
+        <h5>{- catObj.cat -}</h5>
+        <div class="props-box">
+            <div ng-repeat="gp in catObj.words.groups" class="group props-box" >
+                <div ng-repeat="word in gp">
+                    <button ng-click="itemToggle_new($event, catObj.words, word)" class="btn  btn-sm radius" ng-class="{'btn-outline-secondary':(wordDataModels[word.id].excFlag>0&&!wordDataModels[word.id].isSelected), 'btn-outline-primary':(wordDataModels[word.id].excFlag==0&&!wordDataModels[word.id].isSelected), 'btn-primary':wordDataModels[word.id].isSelected}" name="{- word.name -}" value="{- word.name -}" data-key="{-word.key-}" data-val="{-word.value-}" id="w_{- word.id -}" data-sub="" data-selected="false">{- word.name -}</button>
+                </div>
+            </div>
+
+        </div>
+        <div ng-if="!catObj.child" class="comments" style="" value="">
+            <input class="" value="" data-cat="{- catObj.cat -}" placeholder="补充：" />
+        </div>
+
+        <!-- will loop if any child -->
+        <div ng-repeat="subCatObj in catObj.child">
+            <div>{- subCatObj.cat -}</div>
+            <div class="props-box">
+                <div ng-repeat="sub_gp in subCatObj.words.groups" class="group props-box">
+                    <div ng-repeat="word in sub_gp">
+                        <!--<button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm radius" name="{- word.name -}" value="{- word.name -}" data-key="{-word.key-}" data-val="{-word.value-}"  id="w_{- word.id -}" data-sub="" data-selected="false">{- word.name -}</button> -->
+                        <button ng-click="itemToggle_new($event, subCatObj.words, word)" class="btn btn-sm radius" ng-class="{'btn-outline-secondary':(wordDataModels[word.id].excFlag>0&&!wordDataModels[word.id].isSelected), 'btn-outline-primary':(wordDataModels[word.id].excFlag==0&&!wordDataModels[word.id].isSelected), 'btn-primary':wordDataModels[word.id].isSelected}" name="{- word.name -}" value="{- word.name -}" data-key="{-word.key-}" data-val="{-word.value-}"  id="w_{- word.id -}" data-sub="" data-selected="false">{- word.name -}</button>
+                    </div>
+                </div>
+            </div>
+            <div class="comments" style="" value="">
+                <input class="" value="" data-cat="{- subCatObj.cat -}" placeholder="补充：" />
+            </div>
+        </div>
+    </section>
+
+
     <h5>干茶香</h5>
     <section class="category" >
         <div class="props-box">
              <div ng-repeat="x in word_data['干茶香']" class="prop" >
-                 <button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm" name="干茶香" value='[[ x.name ]]' data-key="[[x.key]]" data-value="[[x.value]]" data-sub="" data-selected="false">[[ x.name ]]</button>
+                 <button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm" name="干茶香" value="{- x.name -}" data-key="{-x.key-}" data-val="{-x.value-}" data-id="{- x.id -}" data-sub="" data-selected="false">{- x.name -}</button>
             {#     <a class="card-link" href="#">[[ x.name ]]</a>#}
+                 <div ng-if="Object.prototype.toString.call(x)">hhh</div>
              </div>
         </div>
         <div class="comments" style="" value="">
@@ -19,15 +52,15 @@
     <h5>茶汤入口</h5>
     <section ng-repeat="(k, v) in word_data['茶汤入口']" class="category" >
         <div class="sub-cat">
-            <h6>[[k]]</h6>
+            <h6>{-k-}</h6>
 
             <div class="props-box">
                 <div ng-repeat="it in v" class="prop">
-                 <button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm" name="茶汤入口" value="[[it.name]]" data-sub="[[k]]" data-key="[[it.key]]" data-value="[[it.value]]" data-selected="false">[[it.name]]</button>
+                 <button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm" name="茶汤入口" value="{-it.name-}" data-sub="{-k-}" data-key="{-it.key-}" data-val="{-it.value-}" data-selected="false">{-it.name-}</button>
                 </div>
             </div>
             <div class="comments" style="" value="">
-                <input class="" value=""  data-cat="茶汤入口" data-sub="[[ k ]]" placeholder="补充：" />
+                <input class="" value=""  data-cat="茶汤入口" data-sub="{- k -}" placeholder="补充：" />
             </div>
         </div>
     </section>
@@ -36,16 +69,16 @@
     <section ng-repeat="(k, v) in word_data['茶汤下咽后的感觉']" class="category" >
 
         <div class="sub-cat">
-            <h6>[[k]]</h6>
+            <h6>{-k-}</h6>
 
             <div class="props-box">
                 <div ng-repeat="it in v" class="prop">
-                 <button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm" name="茶汤下咽后的感觉" value="[[it.name]]" data-sub="[[k]]" data-key="[[it.key]]" data-value="[[it.value]]"  data-selected="false">[[it.name]]</button>
+                 <button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm" name="茶汤下咽后的感觉" value="{-it.name-}" data-sub="{-k-}" data-key="{-it.key-}" data-val="{-it.value-}"  data-selected="false">{-it.name-}</button>
                 </div>
             </div>
 
             <div class="comments" style="" value="">
-                <input class="" value="" data-cat="茶汤下咽后的感觉" data-sub="[[ k ]]" placeholder="补充：" />
+                <input class="" value="" data-cat="茶汤下咽后的感觉" data-sub="{- k -}" placeholder="补充：" />
             </div>
         </div>
     </section>
@@ -54,8 +87,8 @@
     <section class="category" >
         <div class="props-box">
              <div ng-repeat="x in word_data['茶汤的整体滋味变化']" class="prop" >
-                 <button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm " name="茶汤的整体滋味变化" value="[[ x.name ]]" data-sub="" data-key="[[x.key]]" data-value="[[x.value]]"  data-selected="false">[[ x.name ]]</button>
-            {#     <a class="card-link" href="#">[[ x.name ]]</a>#}
+                 <button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm " name="茶汤的整体滋味变化" value="{- x.name -}" data-sub="" data-key="{-x.key-}" data-val="{-x.value-}"  data-selected="false">{- x.name -}</button>
+{#                 <a class="card-link" href="#">{- x.name -}</a>#}
              </div>
         </div>
         <div class="comments" style="" value="">
@@ -67,8 +100,8 @@
     <section class="category" >
         <div class="props-box">
              <div ng-repeat="x in word_data['身体对茶的反应']" class="prop" >
-                 <button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm " name="身体对茶的反应" value="[[ x.name ]]" data-sub="" data-key="[[x.key]]" data-value="[[x.value]]"  data-selected="false">[[ x.name ]]</button>
-            {#     <a class="card-link" href="#">[[ x.name ]]</a>#}
+                 <button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm " name="身体对茶的反应" value="{- x.name -}" data-sub="" data-key="{-x.key-}" data-val="{-x.value-}"  data-selected="false">{- x.name -}</button>
+{#                 <a class="card-link" href="#">{- x.name -}</a>#}
              </div>
         </div>
         <div class="comments" style="" value="">

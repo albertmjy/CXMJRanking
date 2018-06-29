@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <title>Edit User Form</title>
@@ -99,11 +99,15 @@
     var app = angular.module('myApp', []);
 
     app.config(function($interpolateProvider){
-        $interpolateProvider.startSymbol('[[').endSymbol(']]');
+        $interpolateProvider.startSymbol('{-').endSymbol('-}');
     });
+
 
     console.log(location.href)
     app.controller('bodyController', function($scope, $http) {
+        $scope.wordDataModels = []
+        $scope.isSelected = -1
+        // $scope.isCar = 0
         $http({
             method: 'GET',
             url: "/service/data/word/"
@@ -111,10 +115,94 @@
             //url: 'http://localhost:5000/static/resources/source2.json'
         }).then(function successCallback(response) {
                 $scope.word_data = response.data;
+                $scope.newData = $scope._processData(response.data)
+                // swap 1, 2
+                var tmpObj = $scope.newData.struct[1]
+                $scope.newData.struct[1] = $scope.newData.struct[2]
+                $scope.newData.struct[2] = tmpObj
+
                 console.log($scope.word_data)
+                console.log($scope.newData)
+
+
+                // create data models for latter exclusive relationship, indexed by wordId
+                $scope.newData.struct.forEach(function (catObj) {
+                    if (catObj.child){
+                        catObj.child.forEach(function (subCatObj) {
+                            subCatObj.words.groups.forEach(function (groupObj) {
+                                groupObj.forEach(function (wordObj) {
+                                    $scope.wordDataModels[wordObj.id] = {'excFlag': 0, 'isSelected':false}
+                                })
+                            })
+                        })
+                    } else {
+                        catObj.words.groups.forEach(function (groupObj) {
+                            groupObj.forEach(function (wordObj) {
+                                $scope.wordDataModels[wordObj.id] = {'excFlag': 0, 'isSelected':false}
+                            })
+                        })
+                    }
+                })
             }, function errorCallback(response) {
                 // 请求失败执行代码
         });
+
+        // temporary use
+        $scope._processData = function (origin) {
+            newData = {}
+            // extract the structure
+            newData.struct = []
+            for(cat in origin){
+                obj = {'cat':cat}
+                if (Object.prototype.toString.call(origin[cat]).match(/Object/)){
+                    obj.child = []
+                    for (subcat in origin[cat]){
+                        subobj = {'cat':subcat}
+                        obj.child.push(subobj)
+                    }
+                }
+                newData.struct.push(obj)
+            }
+            // make up the words
+            newData.words = []
+            newData.struct.forEach(function(catObj, i){
+                catName = catObj.cat
+                var groups = $scope._groupByInc(origin[catName])
+                if (groups){
+                    catObj.words = {'groups':[]}
+                    catObj.words.groups = groups
+                }
+                // catObj.words = origin[catName]
+                // newData.words.push.apply(newData.words, origin[catName])  // concat 2 array
+
+                // loop if any child
+                for (i in catObj.child){
+                    subCatName = catObj.child[i].cat
+                    var groups = $scope._groupByInc( origin[catName][subCatName])
+                    catObj.child[i].words = {'groups':[]}
+                    catObj.child[i].words.groups = groups
+                }
+            })
+
+            return newData
+        }
+
+        $scope._groupByInc = function(words){
+            // if sub cat
+            if (Object.prototype.toString.call(words).match(/Object/)){
+                return null
+            }
+
+            // divide into groups by inclusion
+            var groups = []
+            words.forEach(function (wordObj, i) {
+                var inclusion = wordObj.inc || 0      //  assign 0 if it's null
+                groups[inclusion] = groups[inclusion] || []   // create new array if groups[inclusion] is not defined
+                groups[inclusion].push(wordObj)
+            })
+
+            return groups
+        }
 
 
         $scope.TODAY = (new Date()).toJSON().substr(0,10)
@@ -172,19 +260,163 @@
                 }, function errorCallback(response) {
             });
         }
-        $scope.itemToggle = function (e) {
+
+        function _deselete(currEl, cat_words, word) {
+            console.log('de-select ', word)
+            $scope.wordDataModels[word.id].isSelected = false    // data model
+            _toggleSelData(currEl, false)  // will be removed
+            console.log('  data model change to ', $scope.wordDataModels[word.id])
+
+            // revert exclusive flag
+            var toggleObjList = _exclude_toggle(cat_words, word)
+            console.log(' exclude toggle list(-1) ', toggleObjList)
+            toggleObjList.forEach(function (wordObj) {
+                var wId = wordObj.id
+                $scope.wordDataModels[wId].excFlag -= 1
+            })
+        }
+        function _select(currEl, cat_words, word) {
+            console.log('select ', word)
+            $scope.wordDataModels[word.id].isSelected = true   // data model
+            _toggleSelData(currEl, true)  // will be removed
+            console.log('  data model change to ', $scope.wordDataModels[word.id])
+
+            // add exclusive flag
+            var toggleObjList = _exclude_toggle(cat_words, word)
+            console.log(' exclude toggle list(+1) ', toggleObjList)
+            toggleObjList.forEach(function (wordObj) {
+                var wId = wordObj.id
+                $scope.wordDataModels[wId].excFlag += 1
+
+                if ($scope.wordDataModels[wId].isSelected) {
+                    console.log('    trigger de-select ', wordObj)
+                    var subEl = document.getElementById('w_'+wId)
+                    _deselete(subEl, cat_words, wordObj)
+                }
+            })
+        }
+        $scope.itemToggle_new = function (e, cat_words, word) {
+            var currEl = e.currentTarget
+            if (currEl.className.match(/btn-primary/)){
+                console.log('>>', 'deselect')
+                _deselete(currEl, cat_words, word)
+                console.log('<<', 'deselect')
+            } else {
+                console.log('>>', 'select')
+                _select(currEl, cat_words, word)
+                console.log('<<', 'select')
+            }
+        }
+
+        // @Deprecated
+        /*
+        $scope.itemToggle = function (e, cat_words, word) {
             var currEl = e.currentTarget
 
             var clsName = currEl.className
-            if (currEl.className.includes('btn-outline-primary')){
-                currEl.className = clsName.replace('btn-outline-primary', 'btn-primary')
-                _toggleSelData(currEl, true)
-            } else {
-                currEl.className = clsName.replace('btn-primary', 'btn-outline-primary')
+            if (currEl.className.includes('btn-primary')){
+                currEl.className = clsName.replace(/btn-primary/, 'btn-outline-primary')
                 _toggleSelData(currEl, false)
+            } else {
+                currEl.className = clsName.replace(/(btn-outline-primary|btn-outline-secondary)/, 'btn-primary')
+                _toggleSelData(currEl, true)
+            }
+
+            var wId = word.id
+            // selected
+            if (clsName.match(/btn-primary/)){
+                $scope.wordDataModels[wId].excFlag = 0  // clear the exclusive status if any
+                var toggleObjList = _exclude_toggle(cat_words, word)
+                toggleObjList.forEach(function (wordObj) {
+                    var id = wordObj.id
+                    $scope.wordDataModels[id].excFlag += 1
+                    var el = document.getElementById('w_'+id)
+                    _toggleSelData(el, false)
+                })
+            } else{ // de-selected
 
             }
 
+            // reset last time exclusive dom list
+            console.log($scope.lastExcDomList)
+            $scope.lastExcDomList.forEach(function (el) {
+                var className = el.className
+                el.className = className.replace(/btn-outline-secondary/, 'btn-outline-primary')
+            })
+            // clear dom list
+            $scope.lastExcDomList = []
+
+            //console.log(cat_words)
+            // toggle related exclusive words
+            //var excToggleList = _exclude_toggle(cat_words, word)
+            //console.log(excToggleList)
+            //excToggleList.forEach(function (wordObj) {
+            //    var id = 'w_' + wordObj.id
+            //    var el = document.getElementById(id)
+            //    var className = el.className
+
+            //    if (className.match(/btn-outline-primary/)){
+            //        el.className = className.replace(/btn-outline-primary/, 'btn-outline-secondary')
+            //    }
+            //    if (className.match(/btn-primary/)){
+            //        _toggleSelData(el, false)
+            //        el.className = className.replace(/btn-primary/, 'btn-outline-secondary')
+            //    }
+            //    $scope.lastExcDomList.push(el)  // push history list
+            //})
+        }
+        */
+        function _exclude_toggle(cat_words, currWord) {
+            if (!currWord.exc){
+                return
+            }
+            // console.log('exc:' , currWord.exc)
+            var excCond = _parseExcCondition(currWord.exc)
+            // console.log(excCond)
+
+            var toggle_list = []
+            cat_words.groups.forEach(function (words) {
+                words.forEach(function (word) {
+                    if (word.exc){
+                        var excCondition = _parseExcCondition(word.exc)
+
+                        // strong condition match
+                        excCond.strong.forEach(function (ruleNum) {
+                            if (excCondition.strong.includes(ruleNum) || excCondition.week.includes(ruleNum)){
+                                if (word != currWord){
+                                    toggle_list.push(word)
+                                }
+                            }
+                        })
+                        // week condition match
+                        excCond.week.forEach(function (ruleNum) {
+                            if (excCondition.strong.includes(ruleNum)){
+                                if (word != currWord){
+                                    toggle_list.push(word)
+                                }
+                            }
+                        })
+                    }
+                })
+            })
+
+            return toggle_list
+        }
+
+        function _parseExcCondition(excString) {
+            var conditionList = excString.split(':')
+            var strongCond = [], weekCond = []
+            if (conditionList[0]){
+                strongCond = conditionList[0].split(",")
+            }
+            if (conditionList[1]){
+                weekCond = conditionList[1].split(",")
+            }
+            var excList = {
+                'strong': strongCond,
+                'week':weekCond
+            }
+            return excList
         }
 
         function _toggleSelData(el, bool) {
@@ -226,7 +458,6 @@
                 }
             }
 
-
                 // pack up the item
                 var nodeList = document.forms[i].querySelectorAll('button[data-selected="true"]')
                 nodeList.forEach(function (obj, i) {
@@ -235,7 +466,7 @@
                     var sub = obj.getAttribute('data-sub')
                     var prop = obj.value
                     var key = obj.getAttribute('data-key')
-                    var value = obj.getAttribute('data-value')
+                    var value = obj.getAttribute('data-val')
 
                     console.log(cat, sub, prop, key, value)
 
@@ -259,8 +490,8 @@
                     var sub = input.getAttribute('data-sub')
                     var value = input.value
 
-                    {#var catKey = $scope.keys[cat]#}
-                    {#var subKey = $scope.subkeys[cat][sub]#}
+                    // var catKey = $scope.keys[cat]
+                    // var subKey = $scope.subkeys[cat][sub]
                     var catKey = input.getAttribute('data-cat')
                     var subKey = input.getAttribute('data-sub')
 
