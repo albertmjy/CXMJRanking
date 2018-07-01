@@ -29,6 +29,8 @@ def save_to_survey_table(resp_obj):
     submit_date = resp_obj['date']
     name = resp_obj['user']
     survey_data = resp_obj['surveyData']
+    survey_word = resp_obj['surveyWord']
+    print(survey_word)
 
     eng = create_engine("sqlite:///data/cxmj_ranking.db")
     Session = sessionmaker(bind=eng)

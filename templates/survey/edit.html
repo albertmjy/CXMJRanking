@@ -35,27 +35,42 @@
         <input name="user" class="form-control" ng-model="user" placeholder="姓名" />
         <input name="teaage" type="number" class="form-control" ng-model="teaage" placeholder="茶龄" />
     </div>
-
+<!--
     <div class="tab-pane fade show active" id="v-form1" role="tabpanel" >
         <form name="" class="form">
+            <div ng-repeat="data in [1,2,3]" ng-include="survey_form.html"></div>
+        </form>
+    </div>
+    -->
+    <div class="tab-pane fade show active" id="v-form1" role="tabpanel" >
+        <form name="" class="form">
+            {% with formIdx=0 %}
             {% include 'survey/survey_form.html' %}
+            {% endwith %}
         </form>
     </div>
     <div class="tab-pane fade" id="v-form2" role="tabpanel" >
         <form name="" class="form">
+            {% with formIdx=1 %}
             {% include 'survey/survey_form.html' %}
+            {% endwith %}
         </form>
     </div>
     <div class="tab-pane fade" id="v-form3" role="tabpanel" >
         <form name="" class="form">
+            {% with formIdx=2 %}
             {% include 'survey/survey_form.html' %}
+            {% endwith %}
         </form>
     </div>
     <div class="tab-pane fade" id="v-form4" role="tabpanel" >
         <form name="" class="form">
+            {% with formIdx=3 %}
             {% include 'survey/survey_form.html' %}
+            {% endwith %}
         </form>
     </div>
+
 </div>
 
 <footer class="footer fixed-bottom">
@@ -105,8 +120,8 @@
 
     console.log(location.href)
     app.controller('bodyController', function($scope, $http) {
-        $scope.wordDataModels = []
-        $scope.isSelected = -1
+        $scope.wordDataModels = [[],[],[],[]]
+        // $scope.isSelected = -1
         // $scope.isCar = 0
         $http({
             method: 'GET',
@@ -131,18 +146,25 @@
                         catObj.child.forEach(function (subCatObj) {
                             subCatObj.words.groups.forEach(function (groupObj) {
                                 groupObj.forEach(function (wordObj) {
-                                    $scope.wordDataModels[wordObj.id] = {'excFlag': 0, 'isSelected':false}
+                                    for(var formIdx=0; formIdx<4;formIdx++){
+                                        $scope.wordDataModels[formIdx][wordObj.id] = {'excFlag': 0, 'isSelected':false}
+                                    }
+                                    // $scope.wordDataModels[wordObj.id] = {'excFlag': 0, 'isSelected':false}
                                 })
                             })
                         })
                     } else {
                         catObj.words.groups.forEach(function (groupObj) {
                             groupObj.forEach(function (wordObj) {
-                                $scope.wordDataModels[wordObj.id] = {'excFlag': 0, 'isSelected':false}
+                                for (var formIdx=0; formIdx<4;formIdx++){
+                                    $scope.wordDataModels[formIdx][wordObj.id] = {'excFlag': 0, 'isSelected':false}
+                                }
+                                // $scope.wordDataModels[wordObj.id] = {'excFlag': 0, 'isSelected':false}
                             })
                         })
                     }
                 })
+            console.log($scope.wordDataModels)
             }, function errorCallback(response) {
                 // 请求失败执行代码
         });
@@ -247,8 +269,9 @@
 
         $scope.submit = function () {
             var surveyData = _buildFormData()
+            var surveyWord = _surveyWord()
 
-            var returnData = {"keys":$scope.keys, "subs":$scope.subkeys, "user":$scope.user, "teaAge":$scope.teaage, "date":$scope.TODAY, "surveyData": surveyData}
+            var returnData = {"keys":$scope.keys, "subs":$scope.subkeys, "user":$scope.user, "teaAge":$scope.teaage, "date":$scope.TODAY, "surveyData": surveyData, 'surveyWord':surveyWord}
 
             $http({
                 method: 'POST',
@@ -261,49 +284,52 @@
             });
         }
 
-        function _deselete(currEl, cat_words, word) {
+        function _deselete(currEl, cat_words, word, formIdx) {
             console.log('de-select ', word)
-            $scope.wordDataModels[word.id].isSelected = false    // data model
+            var currForm = $scope.wordDataModels[formIdx]
+            currForm[word.id].isSelected = false    // data model
             _toggleSelData(currEl, false)  // will be removed
-            console.log('  data model change to ', $scope.wordDataModels[word.id])
+            console.log('  data model change to ', currForm[word.id])
 
             // revert exclusive flag
             var toggleObjList = _exclude_toggle(cat_words, word)
             console.log(' exclude toggle list(-1) ', toggleObjList)
             toggleObjList.forEach(function (wordObj) {
                 var wId = wordObj.id
-                $scope.wordDataModels[wId].excFlag -= 1
+                currForm[wId].excFlag -= 1
             })
         }
-        function _select(currEl, cat_words, word) {
+        function _select(currEl, cat_words, word, formIdx) {
             console.log('select ', word)
-            $scope.wordDataModels[word.id].isSelected = true   // data model
+            var currForm = $scope.wordDataModels[formIdx]
+            currForm[word.id].isSelected = true   // data model
             _toggleSelData(currEl, true)  // will be removed
-            console.log('  data model change to ', $scope.wordDataModels[word.id])
+            console.log('  data model change to ', currForm[word.id])
 
             // add exclusive flag
             var toggleObjList = _exclude_toggle(cat_words, word)
             console.log(' exclude toggle list(+1) ', toggleObjList)
             toggleObjList.forEach(function (wordObj) {
                 var wId = wordObj.id
-                $scope.wordDataModels[wId].excFlag += 1
+                currForm[wId].excFlag += 1
 
-                if ($scope.wordDataModels[wId].isSelected) {
+                if (currForm[wId].isSelected) {
                     console.log('    trigger de-select ', wordObj)
                     var subEl = document.getElementById('w_'+wId)
-                    _deselete(subEl, cat_words, wordObj)
+                    _deselete(subEl, cat_words, wordObj, formIdx)
                 }
             })
         }
-        $scope.itemToggle_new = function (e, cat_words, word) {
+        $scope.itemToggle_new = function (e, cat_words, word, formIdx) {
+            console.log('formIdx', formIdx)
             var currEl = e.currentTarget
             if (currEl.className.match(/btn-primary/)){
                 console.log('>>', 'deselect')
-                _deselete(currEl, cat_words, word)
+                _deselete(currEl, cat_words, word, formIdx)
                 console.log('<<', 'deselect')
             } else {
                 console.log('>>', 'select')
-                _select(currEl, cat_words, word)
+                _select(currEl, cat_words, word, formIdx)
                 console.log('<<', 'select')
             }
         }
@@ -423,6 +449,16 @@
             el.setAttribute('data-selected', bool)
         }
 
+        function _surveyWord() {
+            var surveyWord = []
+            $scope.wordDataModels.forEach(function (model, i) {
+                if (model.isSelected){
+                    surveyWord.push({'id':i})
+                }
+            })
+            return surveyWord
+        }
+
         function _buildFormData() {
             var surveyDataSet = []
 
@@ -468,7 +504,9 @@
                     var key = obj.getAttribute('data-key')
                     var value = obj.getAttribute('data-val')
 
-                    console.log(cat, sub, prop, key, value)
+                    var wId = obj.id
+
+                    console.log(cat, sub, prop, key, value, wId)
 
                     if (sub){
                         // surveyData[cat][sub].values.push(prop)
@@ -476,10 +514,10 @@
                         console.log(surveyData[cat])
                         console.log(surveyData[cat][sub])
 
-                        surveyData[cat][sub].values.push({'key':key, "prop":prop, "value":value})
+                        surveyData[cat][sub].values.push({'key':key, "prop":prop, "value":value, 'id':wId.substr(2)})
                     } else{
                         // surveyData[cat].values.push(prop)
-                        surveyData[cat].values.push({'key':key, "prop":prop, "value":value})
+                        surveyData[cat].values.push({'key':key, "prop":prop, "value":value, 'id':wId.substr(2)})
                     }
                 })
 

@@ -1,13 +1,12 @@
 
 
 <div class="card card-body bg-white" style="margin-bottom: 3em">
-
     <section class="category" ng-repeat="catObj in newData.struct" >
         <h5>{- catObj.cat -}</h5>
         <div class="props-box">
             <div ng-repeat="gp in catObj.words.groups" class="group props-box" >
                 <div ng-repeat="word in gp">
-                    <button ng-click="itemToggle_new($event, catObj.words, word)" class="btn  btn-sm radius" ng-class="{'btn-outline-secondary':(wordDataModels[word.id].excFlag>0&&!wordDataModels[word.id].isSelected), 'btn-outline-primary':(wordDataModels[word.id].excFlag==0&&!wordDataModels[word.id].isSelected), 'btn-primary':wordDataModels[word.id].isSelected}" name="{- word.name -}" value="{- word.name -}" data-key="{-word.key-}" data-val="{-word.value-}" id="w_{- word.id -}" data-sub="" data-selected="false">{- word.name -}</button>
+                    <button ng-click="itemToggle_new($event, catObj.words, word, {{ formIdx }})" class="btn  btn-sm radius" ng-class="{'btn-outline-secondary':(wordDataModels[{{ formIdx }}][word.id].excFlag>0&&!wordDataModels[{{ formIdx }}][word.id].isSelected), 'btn-outline-primary':(wordDataModels[{{ formIdx }}][word.id].excFlag==0&&!wordDataModels[{{ formIdx }}][word.id].isSelected), 'btn-primary':wordDataModels[{{ formIdx }}][word.id].isSelected}" name="{- catObj.cat -}" value="{- word.name -}" data-key="{-word.key-}" data-val="{-word.value-}" id="w_{- word.id -}" data-sub="" data-selected="false">{- word.name -}</button>
                 </div>
             </div>
 
@@ -23,17 +22,17 @@
                 <div ng-repeat="sub_gp in subCatObj.words.groups" class="group props-box">
                     <div ng-repeat="word in sub_gp">
                         <!--<button ng-click="itemToggle($event)" class="btn btn-outline-primary btn-sm radius" name="{- word.name -}" value="{- word.name -}" data-key="{-word.key-}" data-val="{-word.value-}"  id="w_{- word.id -}" data-sub="" data-selected="false">{- word.name -}</button> -->
-                        <button ng-click="itemToggle_new($event, subCatObj.words, word)" class="btn btn-sm radius" ng-class="{'btn-outline-secondary':(wordDataModels[word.id].excFlag>0&&!wordDataModels[word.id].isSelected), 'btn-outline-primary':(wordDataModels[word.id].excFlag==0&&!wordDataModels[word.id].isSelected), 'btn-primary':wordDataModels[word.id].isSelected}" name="{- word.name -}" value="{- word.name -}" data-key="{-word.key-}" data-val="{-word.value-}"  id="w_{- word.id -}" data-sub="" data-selected="false">{- word.name -}</button>
+                        <button ng-click="itemToggle_new($event, subCatObj.words, word, {{ formIdx }})" class="btn btn-sm radius" ng-class="{'btn-outline-secondary':(wordDataModels[{{ formIdx }}][word.id].excFlag>0&&!wordDataModels[{{ formIdx }}][word.id].isSelected), 'btn-outline-primary':(wordDataModels[{{ formIdx }}][word.id].excFlag==0&&!wordDataModels[{{ formIdx }}][word.id].isSelected), 'btn-primary':wordDataModels[{{ formIdx }}][word.id].isSelected}" name="{- subCatObj.cat -}" value="{- word.name -}" data-key="{-word.key-}" data-val="{-word.value-}"  id="w_{- word.id -}" data-sub="{- subCatObj.cat -}" data-selected="false">{- word.name -}</button>
                     </div>
                 </div>
             </div>
             <div class="comments" style="" value="">
-                <input class="" value="" data-cat="{- subCatObj.cat -}" placeholder="补充：" />
+                <input class="" value="" data-cat="{- catObj.cat -}" data-sub="{- subCatObj.cat -}" placeholder="补充：" />
             </div>
         </div>
     </section>
 
-
+<!--
     <h5>干茶香</h5>
     <section class="category" >
         <div class="props-box">
@@ -108,7 +107,7 @@
             <input class="" value="" data-cat="身体对茶的反应" placeholder="补充：" />
         </div>
     </section>
-
+-->
 {#{% for it in data['茶汤入口'] %}#}
 {#<h6>{{ it }}</h6>#}
 {#<div class="" style="display: flex; flex-wrap: wrap; justify-content: space-between;">#}
