@@ -164,7 +164,6 @@
                         })
                     }
                 })
-            console.log($scope.wordDataModels)
             }, function errorCallback(response) {
                 // 请求失败执行代码
         });
@@ -450,12 +449,31 @@
         }
 
         function _surveyWord() {
-            var surveyWord = []
-            $scope.wordDataModels.forEach(function (model, i) {
-                if (model.isSelected){
-                    surveyWord.push({'id':i})
-                }
+            var surveyWord = [{},{},{},{}]
+            surveyWord.forEach(function (obj) {
+                obj.words = []
+                obj.comments = []
             })
+
+            $scope.wordDataModels.forEach(function (form, formIdx) {
+                form.forEach(function (model, i) {
+                    if (model.isSelected){
+                        surveyWord[formIdx].words.push({'id':i})
+                    }
+                })
+
+                // comments, latter change to angular model
+                var commentsNode = document.forms[formIdx].querySelectorAll('input[data-cat]')
+                commentsNode.forEach(function (input) {
+                    var cat = input.getAttribute('data-cat')
+                    var sub = input.getAttribute('data-sub')
+                    var value = input.value
+                    if (value){
+                        surveyWord[formIdx].comments.push({'cat':cat, 'sub':sub||"", 'val':value})
+                    }
+                })
+            })
+
             return surveyWord
         }
 

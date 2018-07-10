@@ -5,6 +5,9 @@ from sqlalchemy.orm import sessionmaker, relationship
 
 from datetime import datetime
 
+eng = create_engine("sqlite:///data/cxmj_ranking.db")
+Session = sessionmaker(bind=eng)
+
 Base = declarative_base()
 
 class User(Base):

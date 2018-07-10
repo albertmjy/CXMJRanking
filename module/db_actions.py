@@ -28,27 +28,85 @@ def create_survey_tables():
 def save_to_survey_table(resp_obj):
     submit_date = resp_obj['date']
     name = resp_obj['user']
-    survey_data = resp_obj['surveyData']
+    survey_data = resp_obj['surveyData']  # deprecated
     survey_word = resp_obj['surveyWord']
-    print(survey_word)
+    # print(survey_word)
+    ses = db_model.Session()
+    form_model_list = create_by_survey_word(survey_word, ses)
+    survey_model = db_model.SurveyData(UserName=name, Form=form_model_list, SubmitDate=datetime.strptime(submit_date, '%Y-%m-%d'))
 
-    eng = create_engine("sqlite:///data/cxmj_ranking.db")
-    Session = sessionmaker(bind=eng)
-    ses = Session()
-    q = ses.query(db_model.Category)
+    ses.add(survey_model)
+    ses.commit()
 
+    # eng = create_engine("sqlite:///data/cxmj_ranking.db")
+    # Session = sessionmaker(bind=eng)
+    # ses = Session()
+    # q = ses.query(db_model.Category)
+    #
+    # form_model_list = []
+    # for i in range(0, 4):
+    #     print("*" * 50)
+    #     print(survey_data[i])
+    #     form_model = _single_form(survey_data[i], q, i)
+    #
+    #     form_model_list.append(form_model)
+    #
+    # datalist = db_model.SurveyData(UserName=name, Form=form_model_list)
+    # ses.add(datalist)
+    # ses.commit()
+    # print(form_model)
+
+def _calc_score(ses, word_id_list):
+    all_word_models = ses.query(db_model.Word)
+
+    score_obj = {'sum':0, 'score':0}
+    pos_sum, neg_sum = 0, 0
+    for w in all_word_models:
+        if w.Value > 0:
+            pos_sum += w.Value
+        else:
+            neg_sum += w.Value
+
+        if w.WordId in word_id_list:
+            score_obj['sum'] += w.Value
+
+    score_obj['score'] = (score_obj['sum']-neg_sum)/(pos_sum - neg_sum)
+    return score_obj
+
+def create_by_survey_word(survey_word,ses):
     form_model_list = []
-    for i in range(0, 4):
-        print("*" * 50)
-        print(survey_data[i])
-        form_model = _single_form(survey_data[i], q, i)
+    for idx, form in enumerate(survey_word):
+        word_id_list = []
 
+        form_word_list = []
+        for w in form['words']:
+            word_id_list.append(w['id'])  #  appended for latter score calc usage
+            w_model = db_model.SurveyProp(WordId=w['id'])
+            form_word_list.append(w_model)
+
+        form_comment_list = []
+        for c in form['comments']:
+            cat_id = _get_cat_id(c, ses)
+            # print(cat_id, c)
+            c_model = db_model.SurveyComments(Content=c['val'], CategoryId=cat_id)
+            form_comment_list.append(c_model)
+
+        # calc score
+        score_obj = _calc_score(ses, word_id_list)
+
+        form_model = db_model.SurveyForm(Prop=form_word_list, Comments=form_comment_list, FormOrder=idx+1, Score=score_obj['sum'], ScoreInDecimal=score_obj['score'])
         form_model_list.append(form_model)
 
-    datalist = db_model.SurveyData(UserName=name, Form=form_model_list)
-    ses.add(datalist)
-    ses.commit()
-    # print(form_model)
+    return form_model_list
+# temporary use
+def _get_cat_id(cat_obj, ses):
+    cat = cat_obj['cat']
+    sub = cat_obj['sub'] if cat_obj['sub'] != "" else None
+    cat_id = ses.query(db_model.Category.CategoryId).filter(db_model.Category.RootCategory==cat, db_model.Category.SubCategory==sub).scalar()
+
+    return cat_id
+
+
 
 def _get_key_list(cat_data):
     prop_key_list = []
