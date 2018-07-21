@@ -2,7 +2,7 @@
 from sqlalchemy import create_engine, Column, String, Integer, Float, ForeignKey, TIMESTAMP, DATETIME
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-from datetime import datetime
+from datetime import datetime, date
 from collections import namedtuple
 
 from module import db_model
@@ -24,37 +24,107 @@ def create_survey_tables():
     ses.add_all(datalist)
     ses.commit()
 
-
 def save_to_survey_table(resp_obj):
-    submit_date = resp_obj['date']
-    name = resp_obj['user']
-    survey_data = resp_obj['surveyData']  # deprecated
+    submit_date = datetime.strptime(resp_obj['date'], '%Y-%m-%d')
+    name = resp_obj['user'].strip()
+    ses = db_model.Session()
+
+    # check if date exist
+    survey_model = ses.query(db_model.SurveyData).filter(db_model.SurveyData.UserName == name,
+                                                  db_model.SurveyData.SubmitDate == submit_date).scalar()
+    if survey_model is None:
+        print(survey_model, "create new")
+        create_survey(resp_obj, ses, submit_date, name)
+    else:
+        print(survey_model, "update")
+        update_survey(resp_obj, ses, survey_model)
+
+    # survey_data = resp_obj['surveyData']  # deprecated
+    # survey_word = resp_obj['surveyWord']
+    # # print(survey_word)
+    # form_model_list = create_by_survey_word(survey_word, ses)
+    # survey_model = db_model.SurveyData(UserName=name, Form=form_model_list, SubmitDate=datetime.strptime(submit_date, '%Y-%m-%d'))
+    #
+    # ses.add(survey_model)
+    # ses.commit()
+    #
+    # return survey_model.SurveyId
+
+def create_survey(resp_obj, ses, submit_date, name):
+    # survey_data = resp_obj['surveyData']  # deprecated
     survey_word = resp_obj['surveyWord']
     # print(survey_word)
-    ses = db_model.Session()
     form_model_list = create_by_survey_word(survey_word, ses)
-    survey_model = db_model.SurveyData(UserName=name, Form=form_model_list, SubmitDate=datetime.strptime(submit_date, '%Y-%m-%d'))
+    survey_model = db_model.SurveyData(UserName=name, Form=form_model_list,
+                                       SubmitDate=submit_date)
 
     ses.add(survey_model)
     ses.commit()
 
-    # eng = create_engine("sqlite:///data/cxmj_ranking.db")
-    # Session = sessionmaker(bind=eng)
-    # ses = Session()
-    # q = ses.query(db_model.Category)
-    #
-    # form_model_list = []
-    # for i in range(0, 4):
-    #     print("*" * 50)
-    #     print(survey_data[i])
-    #     form_model = _single_form(survey_data[i], q, i)
-    #
-    #     form_model_list.append(form_model)
-    #
-    # datalist = db_model.SurveyData(UserName=name, Form=form_model_list)
-    # ses.add(datalist)
-    # ses.commit()
-    # print(form_model)
+    return survey_model.SurveyId
+
+def update_survey(resp_obj, ses, survey_model):
+    survey_word = resp_obj['surveyWord']
+    for form in survey_model.Form:
+        idx = form.FormOrder -1
+        props = form.Prop
+        comments = form.Comments
+
+        print(survey_word[idx])
+        print(props)
+        print("*"*50)
+
+        ###### update word ######
+        # extract submitted word id list
+        word_id_list = []
+        for w in survey_word[idx]['words']:
+            word_id_list.append(w['id'])
+
+        for p in props:
+            # delete cancelled word from user
+            if p.WordId not in word_id_list:
+                ses.delete(p)
+            # remove the exists id
+            else:
+                word_id_list.remove(p.WordId)
+
+        # add new left word id
+        for w_id in word_id_list:
+            w_model = db_model.SurveyProp(WordId=w_id)
+            props.append(w_model)
+
+        ###### update comments ######
+        # extract submitted cat id list
+        cat_id_list = []
+        for cmt in survey_word[idx]['comments']:
+            cat_id = _get_cat_id(cmt, ses)
+            cat_id_list.append(cat_id)
+            cmt['id'] = cat_id
+
+        for c in comments:
+            # delete cancelled comments model
+            if c.CategoryId not in cat_id_list:
+                ses.delete(c)
+            # remove the exist comments cat id
+            else:
+                cat_id_list.remove(c.CategoryId)
+
+
+        # add new added comments or update exists
+        for cmt in survey_word[idx]['comments']:
+            # new added
+            if cmt['id'] in cat_id_list:
+                c_model = db_model.SurveyComments(Content=cmt['val'], CategoryId=cmt['id'])
+                comments.append(c_model)
+            # update exists
+            else:
+                for c in comments:
+                    if c.CategoryId == cmt['id']:
+                        c.Content = cmt['val']
+
+    ses.commit()
+
+    print(survey_model.Form)
 
 def _calc_score(ses, word_id_list):
     all_word_models = ses.query(db_model.Word)
@@ -129,6 +199,8 @@ def _make_prop_model(cat_model, key_list):
 def _make_comments_model(comment, cat_id):
     return db_model.SurveyComments(Content=comment, CategoryId=cat_id)
 
+
+# @Deprecated, no use any more
 def _single_form(form_data, q, idx):
     # q.filter()
     Flat_Category = namedtuple('flat_cat', ['cat_model', 'keys', 'comment'])

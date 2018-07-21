@@ -18,7 +18,9 @@ def save(req_data):
 
     obj = json.loads(req_data)  # obj = json.loads(req_data.decode('utf8'))
 
-    db_actions.save_to_survey_table(obj)
+
+
+    survey_id = db_actions.save_to_survey_table(obj)
 
     score_list = calc_score(obj)
     obj['score_list'] = score_list
@@ -219,7 +221,7 @@ def model_sum_neg(model_source):
         if isinstance(model_source[cat], list):
             for it in model_source[cat]:
                 if it['value'] < 0:
-                    print(it['value'])
+                    # print(it['value'])
                     total += it['value']
         else:
             total += model_sum_neg(model_source[cat])
