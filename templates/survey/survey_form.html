@@ -2,7 +2,11 @@
 
 <div class="card card-body bg-white" style="margin-bottom: 3em">
     <section class="category" ng-repeat="catObj in newData.struct" >
-        <h5>{- catObj.cat -}</h5>
+{#        <h5>{- catObj.cat -}</h5>#}
+        <h5 class="" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+  {- catObj.cat -}
+        </h5>
+
         <div class="props-box">
             <div ng-repeat="gp in catObj.words.groups" class="group props-box" >
                 <div ng-repeat="word in gp">

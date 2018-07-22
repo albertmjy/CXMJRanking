@@ -39,8 +39,11 @@ def list_survey():
     for root, path, filename in os.walk("data"):
         if not path:
             list_data[root[5:]] = filename
+    # print(list_data.items())
 
-    return json.dumps(list_data)
+    sorted_by_value = sorted(list_data.items(), key=lambda kv: kv[0], reverse=True)
+
+    return json.dumps(sorted_by_value)
 
 def survey_content_list(date_str):
     list_content = _get_list_content(date_str)
