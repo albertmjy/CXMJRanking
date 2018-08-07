@@ -7,9 +7,6 @@ from collections import Counter
 from module import word
 from module import db_actions
 
-def test():
-    return "life isnot easy"
-
 def save(req_data):
     date_str = time.strftime("%Y-%m-%d")
     path_of_day = "data/"+date_str
@@ -34,16 +31,23 @@ def save(req_data):
         fp.write(json.dumps(obj, indent=1).encode('latin-1').decode('unicode_escape'))
     return str(obj['score_list_decimal'])
 
+def load_to_db():
+    db_actions.sotre_file_to_db()
+    return 'done'
+
 def list_survey():
-    list_data = dict()
-    for root, path, filename in os.walk("data"):
-        if not path:
-            list_data[root[5:]] = filename
-    # print(list_data.items())
+    data_dict = db_actions.get_survey_list()
 
-    sorted_by_value = sorted(list_data.items(), key=lambda kv: kv[0], reverse=True)
+    return json.dumps(list(data_dict.items()))
 
-    return json.dumps(sorted_by_value)
+    # list_data = dict()
+    # for root, path, filename in os.walk("data"):
+    #     if not path:
+    #         list_data[root[5:]] = filename
+    #
+    # sorted_by_value = sorted(list_data.items(), key=lambda kv: kv[0], reverse=True)
+    # return json.dumps(sorted_by_value)
+
 
 def survey_content_list(date_str):
     list_content = _get_list_content(date_str)
@@ -92,7 +96,8 @@ def merge_word(list_content):
                         ls[cat] = []
 
                     for v in current_survey_data[cat]['values']:
-                        ls[cat].append(v['value'])
+                        # ls[cat].append(v['value'])
+                        ls[cat].append(v['prop'])
                     comm_list = re.findall(r"\w+", current_survey_data[cat]['comments'])
                     ls[cat] += comm_list
                     # comm_list = current_survey_data[cat]['comments'].split(' ')
@@ -108,7 +113,8 @@ def merge_word(list_content):
                         current_sub = current_survey_data[cat][sub]
                         # print("\t" * 4, current_sub)
                         for v in current_sub['values']:
-                            ls[cat][sub].append(v['value'])
+                            # ls[cat][sub].append(v['value'])
+                            ls[cat][sub].append(v['prop'])
                         # comm_list += re.findall(r'\w+', current_sub['comments'])
                         comm_list = re.findall(r'\w+', current_sub['comments'])
                         ls[cat][sub] += comm_list
@@ -136,11 +142,14 @@ def _get_list_content(date_str):
     return survey_data_list
 
 def show(date_str, user):
-    path = "data/" + date_str + "/" + user
+    survey_data = db_actions.get_struct_survey(date_str, user)
 
-    with io.open(path, "r", encoding="utf8") as fp:
-        json_str = fp.read()
-    return json_str
+    return json.dumps(survey_data)
+
+    # path = "data/" + date_str + "/" + user
+    # with io.open(path, "r", encoding="utf8") as fp:
+    #     json_str = fp.read()
+    # return json_str
 
 def to_decimal(score_list, json_scource):
     decimal_list = []

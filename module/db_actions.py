@@ -1,11 +1,13 @@
 
-from sqlalchemy import create_engine, Column, String, Integer, Float, ForeignKey, TIMESTAMP, DATETIME
+from sqlalchemy import create_engine, Column, String, Integer, Float, ForeignKey, TIMESTAMP, DATETIME, desc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime, date
 from collections import namedtuple
 
 from module import db_model
+
+import os, io, json
 
 def create_survey_tables():
     eng = create_engine("sqlite:///data/cxmj_ranking.db")
@@ -176,8 +178,165 @@ def _get_cat_id(cat_obj, ses):
 
     return cat_id
 
+def get_survey_list():
+    ses = db_model.Session()
+    all_data = ses.query(db_model.SurveyData).order_by(desc(db_model.SurveyData.SubmitDate))
+    # all_data = ses.query(db_model.SurveyData)._by(desc(db_model.SurveyData.SubmitDate))
+
+    data_dict = dict()
+    for s_model in all_data:
+        submit_date = s_model.SubmitDate.strftime('%Y-%m-%d')
+        if submit_date not in data_dict:
+            data_dict[submit_date] = []
+        data_dict[submit_date].append(s_model.UserName)
+
+    return data_dict
+
+def get_struct_survey(date_str, username):
+    ses = db_model.Session()
+
+    struct = _create_cat_struct(ses)
+    survey_word = get_survey_data(date_str, username, ses)
+    survey_data = {'struct':struct, 'survey_word':survey_word, 'user':username, 'date':date_str}
+
+    return survey_data
 
 
+def get_survey_data(date_str, username, ses):
+    submit_date = datetime.strptime(date_str, '%Y-%m-%d')
+    if ses is None:
+        ses = db_model.Session()
+
+    s_data = ses.query(db_model.SurveyData).filter(db_model.SurveyData.SubmitDate == submit_date, db_model.SurveyData.UserName == username).scalar()  # should be only one record
+
+    # extract the user survey data
+    survey_word = []
+    for f in s_data.Form:
+        idx = f.FormOrder
+        score = f.Score
+        score10 = f.ScoreInDecimal
+
+        form_data = {'words':{}, 'comments':{}, 'score':score, 'score10':score10}
+        # word properties
+        for p in f.Prop:
+            name = p.Word.Name
+            cat_id = p.Word.Category.CategoryId
+            if cat_id not in form_data['words']:
+                form_data['words'][cat_id] = []
+            form_data['words'][cat_id].append(name)
+        # comments
+        for c in f.Comments:
+            content = c.Content
+            cat_id = c.CategoryId
+            if cat_id not in form_data['comments']:
+                form_data['comments'][cat_id] = content
+        survey_word.append(form_data)
+
+    return survey_word
+
+
+def _create_cat_struct(ses):
+    struct = []
+    prev_cat_obj = None
+    all_cat = ses.query(db_model.Category)  # order by order latter
+    for cat_model in all_cat:
+        cat_id = cat_model.CategoryId
+        cat = cat_model.RootCategory
+        sub = cat_model.SubCategory
+
+        cat_obj = None
+
+        if prev_cat_obj and prev_cat_obj['cat'] == cat:
+            # sub cat add to previous parent node
+            cat_obj = prev_cat_obj
+            child = {'cat': sub, 'id': cat_id, 'words': []}
+            cat_obj['child'].append(child)
+        else:
+            # add new cat node
+            cat_obj = {'cat':cat}
+            if sub:
+                child = {'cat': sub, 'id': cat_id, 'words': []}
+                cat_obj['child'] = []
+                cat_obj['child'].append(child)
+            else:
+                cat_obj['words'] = []
+                cat_obj['id'] = cat_id
+            struct.append(cat_obj)
+
+        prev_cat_obj = cat_obj
+
+    return struct
+
+def sotre_file_to_db():
+    list_data = dict()
+    ses = db_model.Session()
+    survey_model_list = []
+    for root, path, filename in os.walk("data"):
+        if not path:
+            list_data[root[5:]] = filename
+            # loop through the date folder
+            for f in filename:
+                with io.open(root + "/" + f, "r", encoding="utf8") as fp:
+                    json_str = fp.read()
+                    survey_obj = json.loads(json_str)
+                    if 'date' in survey_obj and 'user' in survey_obj:
+                        survey_model = _convert_survey_obj_to_model(survey_obj, ses)
+                        survey_model_list.append(survey_model)
+    ses.add_all(survey_model_list)
+    ses.commit()
+
+    # print(list_data)
+
+def _convert_survey_obj_to_model(survey_obj, ses):
+    date = datetime.strptime(survey_obj['date'], '%Y-%m-%d') # survey_obj['date']
+    user = survey_obj['user']
+    form_model_list = []
+    for (idx, data) in enumerate(survey_obj['surveyData']):
+        prop_model_list = []
+        c_model_list = []
+        for cat in data:
+            if 'values' in data[cat]:
+                # no subcat
+                _append_prop_comments_models(prop_model_list, c_model_list, cat, None, data[cat], ses)
+            else:
+                # with subcat
+                for sub in data[cat]:
+                    _append_prop_comments_models(prop_model_list, c_model_list, cat, sub, data[cat][sub], ses)
+
+        score , score10 = None, None
+        if 'score_list' in survey_obj:
+            score, score10 = survey_obj['score_list'][idx], survey_obj['score_list_decimal'][idx]
+
+        form_model = db_model.SurveyForm(Prop=prop_model_list, Comments=c_model_list, FormOrder=idx+1,
+                                         Score=score, ScoreInDecimal=score10)
+        form_model_list.append(form_model)
+
+    survey_model = db_model.SurveyData(UserName=user, SubmitDate=date, Form=form_model_list)
+
+    return survey_model
+    # print("form_list", date, user, form_model_list)
+
+def _append_prop_comments_models(p_model_list, c_model_list, cat, sub, cat_props, ses):
+    cat_id = _get_cat_id_for_old(cat=cat, sub=sub, ses=ses)
+    for prop in cat_props['values']:
+        word_id = _get_word_id_for_old(cat_id=cat_id, key=prop['key'], ses=ses)
+        prop_model = db_model.SurveyProp(WordId=word_id)
+        p_model_list.append(prop_model)
+    for c in cat_props['comments']:
+        c_model = db_model.SurveyComments(Content=c, CategoryId=cat_id)
+        c_model_list.append(c_model)
+
+def _get_cat_id_for_old(cat, sub, ses):
+    cat_id = ses.query(db_model.Category.CategoryId).filter(db_model.Category.RootCategory == cat,
+                                                            db_model.Category.SubCategory == sub).scalar()
+    return cat_id
+
+def _get_word_id_for_old(cat_id, key, ses):
+    word_id = ses.query(db_model.Word.WordId).filter(db_model.Word.Key == key,
+                                                            db_model.Word.CategoryId == cat_id).scalar()
+    return word_id
+
+# @Deprecated, no use any more
 def _get_key_list(cat_data):
     prop_key_list = []
     for prop in cat_data["values"]:
@@ -185,6 +344,7 @@ def _get_key_list(cat_data):
         prop_key_list.append(key)
     return prop_key_list
 
+# @Deprecated, no use any more
 def _make_prop_model(cat_model, key_list):
     prop_model_list = []
 
@@ -196,9 +356,9 @@ def _make_prop_model(cat_model, key_list):
 
     return prop_model_list
 
+# @Deprecated, no use any more
 def _make_comments_model(comment, cat_id):
     return db_model.SurveyComments(Content=comment, CategoryId=cat_id)
-
 
 # @Deprecated, no use any more
 def _single_form(form_data, q, idx):

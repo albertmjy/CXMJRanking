@@ -58,6 +58,10 @@ def data_service():
     return json.dumps( word.read_data())
     # return word
 
+@app.route('/service/load_to_db', methods=['GET', 'POST'])
+def load_to_db():
+    return survey_serv.load_to_db()
+
 @app.route('/data/<name>')
 def data(name):
     # return url_for('static', filename='resources/source.json')
