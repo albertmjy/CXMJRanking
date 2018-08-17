@@ -145,6 +145,17 @@ def _calc_score(ses, word_id_list):
     score_obj['score'] = (score_obj['sum']-neg_sum)/(pos_sum - neg_sum)
     return score_obj
 
+###################################### Analysis ##########################################
+
+def get_date_sruvey(date_str):
+    date = datetime.strptime(date_str, '%Y-%m-%d')
+    ses = db_model.Session()
+    query = ses.query(db_model.SurveyData).filter(db_model.SurveyData.SubmitDate==date)
+
+    return query
+
+###################################### Analysis End ##########################################
+
 def create_by_survey_word(survey_word,ses):
     form_model_list = []
     for idx, form in enumerate(survey_word):
@@ -236,6 +247,7 @@ def get_survey_data(date_str, username, ses):
 
 
 def _create_cat_struct(ses):
+    ses = db_model.Session() if ses is None else ses
     struct = []
     prev_cat_obj = None
     all_cat = ses.query(db_model.Category)  # order by order latter
@@ -261,6 +273,36 @@ def _create_cat_struct(ses):
             else:
                 cat_obj['words'] = []
                 cat_obj['id'] = cat_id
+            struct.append(cat_obj)
+
+        prev_cat_obj = cat_obj
+
+    return struct
+
+def create_cat_struct_flat(ses):
+    ses = db_model.Session() if ses is None else ses
+    struct = []
+    prev_cat_obj = None
+    all_cat = ses.query(db_model.Category)  # order by order latter
+    for cat_model in all_cat:
+        cat_id = cat_model.CategoryId
+        cat = cat_model.RootCategory
+        sub = cat_model.SubCategory
+
+        cat_obj = None
+
+        if prev_cat_obj and prev_cat_obj['cat'] == cat:
+            # sub cat add to previous parent node
+            cat_obj = prev_cat_obj
+            child = {'cat': sub, 'id': cat_id, 'words': []}
+            cat_obj['child'].append(child)
+        else:
+            # add new cat node
+            cat_obj = {'cat':cat}
+            child = {'cat': sub, 'id': cat_id, 'words': []}
+            cat_obj['child'] = []
+            cat_obj['child'].append(child)
+
             struct.append(cat_obj)
 
         prev_cat_obj = cat_obj

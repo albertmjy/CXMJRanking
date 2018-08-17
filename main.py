@@ -43,7 +43,8 @@ def survey(action):
 
 @app.route('/service/survey/analysis', methods=['GET', 'POST'])
 def survey_service_analysis():
-    return survey_serv.survey_content_list(request.args['date'])
+    return survey_serv.analysis_count(request.args['date'])
+    # return survey_serv.survey_content_list(request.args['date'])
 
 @app.route('/service/survey/list', methods=['GET', 'POST'])
 def survey_service():

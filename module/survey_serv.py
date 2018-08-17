@@ -49,6 +49,49 @@ def list_survey():
     # return json.dumps(sorted_by_value)
 
 
+def analysis_count(date_str):
+    # 1, get survey data in specific date
+    s_data = db_actions.get_date_sruvey(date_str)
+    # 2, calc the comment prop
+    form_victor = []
+    name_list = []
+    for s in s_data:
+        form_list = []
+        name_list.append(s.UserName)
+        for form in s.Form:
+            form_list.append(form)
+        form_victor.append(form_list)
+
+    # append the prop word for the same tea in one list by category, then count it
+    common_vector = []
+    for (idx, same_order_forms) in enumerate( zip(*form_victor) ):
+        common_p = {'words': dict(), 'comments': dict()}
+        p_list = dict()
+        for f in same_order_forms:
+            for p in f.Prop:
+                cat_id = p.Word.CategoryId
+                # group p_list by cat_id
+                if cat_id not in p_list:
+                    p_list[cat_id] = []
+                p_list[cat_id].append(p.Word.Name)
+        # count the number of word
+        for cat_id in p_list:
+            p_list[cat_id] = Counter(p_list[cat_id]).most_common()
+
+        common_p['words'] = p_list
+        common_vector.append(common_p)
+
+    # make the response
+    res_data = dict()
+    res_data['date'] = date_str
+    res_data['name_list'] = name_list
+    # res_data['struct'] = db_actions.create_cat_struct_flat(None)
+    res_data['struct'] = db_actions._create_cat_struct(None)
+    res_data['common_vector'] = common_vector
+
+    return json.dumps(res_data)
+
+# @Deprecated
 def survey_content_list(date_str):
     list_content = _get_list_content(date_str)
 
@@ -62,15 +105,6 @@ def survey_content_list(date_str):
                 for sub in parent_cat:
                     parent_cat[sub] = Counter(parent_cat[sub]).most_common()
         print(tea)
-
-    # for cat in merge_list:
-    #     print(cat)
-    #     if isinstance(merge_list[cat], list):
-    #         merge_list[cat] = Counter(merge_list[cat]).most_common()
-    #     else:
-    #         parent_cat = merge_list[cat]
-    #         for sub in parent_cat:
-    #             parent_cat[sub] = Counter(parent_cat[sub]).most_common()
 
     # Counter to count the word
     print(merge_list)

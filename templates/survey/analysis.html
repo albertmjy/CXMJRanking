@@ -7,13 +7,13 @@
      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous" />
 
     <style>
-        h5{
-            background: #dcf1f5;
-            box-shadow: 1px 1px 3px #5ba0e5;
+        .card-body>div:nth-child(even)> .media:nth-child(odd){
+            {#border-bottom: solid 1px #e5e5e5;#}
+            background: #f5f5f5;
         }
-        h6{
-            background: #f7f7f7;
-            text-align: center;
+        .media strong{
+            background: #65be95;
+            color: #fff;
         }
     </style>
 
@@ -30,23 +30,48 @@
 <br />
 <input type="hidden" id="date" value="{{ date }}">
 
-<div>analysis</div>
+<h5 class="text-center">[[ contentList.name_list ]] <small class="text-muted">[[ contentList.date ]]</small></h5>
 
-<div ng-repeat="tea in contentList">
-    <h4>Form [[ $index + 1 ]]</h4>
-    <div ng-repeat=" (cat, v) in tea">
-        <h5> [[ cat ]]</h5>
-        <div ng-if='v.length'>
-            <div ng-repeat="p in v">[[ p ]]</div>
+<div class="card " ng-repeat="(i, sw) in contentList.common_vector">
+    <div class="card-body">
+        <h5 class=" text-right"><span>[[ round3(sw.score10) ]]</span><span class="badge badge-secondary">[[i+1]]</span></h5>
+        <div ng-repeat="cat_obj in contentList.struct">
+        <div class="media" >
+            <strong class="mr-0 col-5">[[ cat_obj.cat ]]</strong>
+              <div class="media-body col-7">
+
+                  <div><span ng-repeat="w in sw.words[cat_obj.id]"><label class="btn-sm btn-outline-dark">[[ w ]]</label></span></div>
+                  <div><label>[[ sw.comments[cat_obj.id] ]]</label></div>
+              </div>
         </div>
-        <div ng-if='!v.length'>
-            <div ng-repeat="(sub, obj) in v">
-                <h6>[[ sub ]]</h6>
-                <div ng-repeat="p in obj">[[ p ]]</div>
-            </div>
+        <div class="media" ng-repeat="child in cat_obj.child" >
+            <strong class="pl-5 col-5">[[ child.cat ]]</strong>
+              <div class="media-body col-7">
+
+                  <div><span ng-repeat="w in sw.words[child.id]"><label class="btn-sm btn-outline-dark">[[ w ]]</label></span></div>
+                  <div><label>[[ sw.comments[child.id] ]]</label></div>
+              </div>
         </div>
     </div>
+    </div>
 </div>
+
+
+{#<div ng-repeat="tea in contentList">#}
+{#    <h4>Form [[ $index + 1 ]]</h4>#}
+{#    <div ng-repeat=" (cat, v) in tea">#}
+{#        <h5> [[ cat ]]</h5>#}
+{#        <div ng-if='v.length'>#}
+{#            <div ng-repeat="p in v">[[ p ]]</div>#}
+{#        </div>#}
+{#        <div ng-if='!v.length'>#}
+{#            <div ng-repeat="(sub, obj) in v">#}
+{#                <h6>[[ sub ]]</h6>#}
+{#                <div ng-repeat="p in obj">[[ p ]]</div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
 
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
