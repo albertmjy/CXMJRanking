@@ -9,13 +9,11 @@ from module import db_actions
 
 def save(req_data):
     date_str = time.strftime("%Y-%m-%d")
-    path_of_day = "data/"+date_str
+    path_of_day = "data/" + date_str
     if not os.path.exists(path_of_day):
         os.mkdir(path_of_day)
 
     obj = json.loads(req_data)  # obj = json.loads(req_data.decode('utf8'))
-
-
 
     survey_id = db_actions.save_to_survey_table(obj)
 
@@ -67,18 +65,31 @@ def analysis_count(date_str):
     for (idx, same_order_forms) in enumerate( zip(*form_victor) ):
         common_p = {'words': dict(), 'comments': dict()}
         p_list = dict()
+        c_list = dict()
         for f in same_order_forms:
+            # loop append for word property
             for p in f.Prop:
                 cat_id = p.Word.CategoryId
                 # group p_list by cat_id
                 if cat_id not in p_list:
                     p_list[cat_id] = []
                 p_list[cat_id].append(p.Word.Name)
+            # loop append for comments
+            for c in f.Comments:
+                cat_id = c.CategoryId
+                if cat_id not in p_list:
+                    p_list[cat_id] = []
+                p_list[cat_id].append(c.Content)
+
         # count the number of word
         for cat_id in p_list:
             p_list[cat_id] = Counter(p_list[cat_id]).most_common()
+        # count the number of comments
+        for cat_id in c_list:
+            c_list[cat_id] = Counter(c_list[cat_id]).most_common()
 
         common_p['words'] = p_list
+        common_p['comments'] = c_list
         common_vector.append(common_p)
 
     # make the response

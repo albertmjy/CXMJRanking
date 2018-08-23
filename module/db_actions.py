@@ -364,7 +364,10 @@ def _append_prop_comments_models(p_model_list, c_model_list, cat, sub, cat_props
         word_id = _get_word_id_for_old(cat_id=cat_id, key=prop['key'], ses=ses)
         prop_model = db_model.SurveyProp(WordId=word_id)
         p_model_list.append(prop_model)
-    for c in cat_props['comments']:
+
+
+    c_arr = cat_props['comments'].split(' ')
+    for c in c_arr:
         c_model = db_model.SurveyComments(Content=c, CategoryId=cat_id)
         c_model_list.append(c_model)
 

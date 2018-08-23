@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 
 from datetime import datetime
 
-eng = create_engine("sqlite:///data/cxmj_ranking.db")
+eng = create_engine("sqlite:///data/cxmj_ranking_server.db")
 Session = sessionmaker(bind=eng)
 
 Base = declarative_base()
