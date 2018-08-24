@@ -36,7 +36,8 @@ def load_to_db():
 def list_survey():
     data_dict = db_actions.get_survey_list()
 
-    return json.dumps(list(data_dict.items()))
+    sorted_list = sorted(list(data_dict.items()), reverse=True)  # fixed server issue
+    return json.dumps(sorted_list)
 
     # list_data = dict()
     # for root, path, filename in os.walk("data"):

@@ -195,7 +195,7 @@ def get_survey_list():
     # all_data = ses.query(db_model.SurveyData)._by(desc(db_model.SurveyData.SubmitDate))
 
     data_dict = dict()
-    for s_model in all_data:
+    for (idx, s_model) in enumerate(all_data):
         submit_date = s_model.SubmitDate.strftime('%Y-%m-%d')
         if submit_date not in data_dict:
             data_dict[submit_date] = []
